@@ -11,8 +11,8 @@
 #define BLOCK_SIZE 4
 #define TILE_SIZE 8
 
-struct opt3 {
-  static constexpr char name[] = "opt3";
+struct opt5 {
+  static constexpr char name[] = "opt5";
 
   size_t M;
   size_t N;
@@ -22,7 +22,7 @@ struct opt3 {
   float *B;
   float *C;
 
-  opt3(float *A, float *B, float *C, const size_t M, const size_t N, const size_t K)
+  opt5(float *A, float *B, float *C, const size_t M, const size_t N, const size_t K)
     : M(M), N(N), K(K), A(A), B(B), C(C) {}
 
   go::status_t operator()() { return kern(A, B, C, M, N, K); }
@@ -49,11 +49,13 @@ struct opt3 {
           size_t gm = om * blk_size;
           size_t gn = on * blk_size;
           __m128 c[blk_size];
+#pragma GCC ivdep
           for (size_t blk = 0; blk < blk_size; ++blk) {
             c[blk] = _mm_setzero_ps();
           }
           for (size_t ok = 0; ok < k_outer; ++ok) {
             size_t gk = ok * tile_size;
+#pragma GCC ivdep
             for (int ik = 0; ik < tile_size; ++ik) {
               float a[blk_size] = {0};
 #pragma GCC ivdep
@@ -90,7 +92,7 @@ int main() {
   const size_t M = 1280;
   const size_t N = 1280;
   const size_t K = 1280;
-  go::GemmPerf<opt3> perf(M, N, K);
+  go::GemmPerf<opt5> perf(M, N, K);
   perf.finalize();
   std::cout << perf;
 

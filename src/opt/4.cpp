@@ -8,8 +8,8 @@
 #include "immintrin.h"
 #include "xmmintrin.h"
 
-struct opt2 {
-  static constexpr char name[] = "opt2";
+struct opt4 {
+  static constexpr char name[] = "opt4";
 
   size_t M;
   size_t N;
@@ -19,7 +19,7 @@ struct opt2 {
   float *B;
   float *C;
 
-  opt2(float *A, float *B, float *C, const size_t M, const size_t N, const size_t K)
+  opt4(float *A, float *B, float *C, const size_t M, const size_t N, const size_t K)
     : M(M), N(N), K(K), A(A), B(B), C(C) {}
 
   go::status_t operator()() { return kern(A, B, C, M, N, K); }
@@ -63,7 +63,7 @@ int main() {
   const size_t M = 1280;
   const size_t N = 1280;
   const size_t K = 1280;
-  go::GemmPerf<opt2> perf(M, N, K);
+  go::GemmPerf<opt4> perf(M, N, K);
   perf.finalize();
   std::cout << perf;
 
