@@ -5,6 +5,9 @@
 #include "common/perf.hpp"
 #include "common/ref_gemm.hpp"
 
+#include "immintrin.h"
+#include "xmmintrin.h"
+
 #define BLOCK_SIZE 4
 #define TILE_SIZE 8
 
@@ -45,32 +48,29 @@ struct opt3 {
         for (size_t on = 0; on < n_outer; ++on) {
           size_t gm = om * blk_size;
           size_t gn = on * blk_size;
-          float c[blk_size][blk_size] = {0};
+          __m128 c[blk_size];
+          for (size_t blk = 0; blk < blk_size; ++blk) {
+            c[blk] = _mm_setzero_ps();
+          }
           for (size_t ok = 0; ok < k_outer; ++ok) {
             size_t gk = ok * tile_size;
             for (int ik = 0; ik < tile_size; ++ik) {
               float a[blk_size] = {0};
-              float b[blk_size] = {0};
 #pragma GCC ivdep
               for (int blk = 0; blk < blk_size; ++blk) {
                 a[blk] = A[(gm + blk) * K + gk + ik];
-                b[blk] = B[(gk + ik) * N + gn + blk];
               }
+              __m128 vec_b = _mm_load_ps(B + (gk + ik) * N + gn);
 #pragma GCC ivdep
               for (int im = 0; im < blk_size; ++im) {
-#pragma GCC ivdep
-                for (int in = 0; in < blk_size; ++in) {
-                  c[im][in] += a[im] * b[in];
-                }
+                __m128 vec_a_dup = _mm_load_ps1(a + im);
+                c[im] = _mm_fmadd_ps(vec_a_dup, vec_b, c[im]);
               }
             }
           }
 #pragma GCC ivdep
           for (int m = 0; m < blk_size; ++m) {
-#pragma GCC ivdep
-            for (int n = 0; n < blk_size; ++n) {
-              C[(gm + m) * N + gn + n] = c[m][n];
-            }
+            _mm_store_ps(C + (gm + m) * N + gn, c[m]);
           }
         }
       }
