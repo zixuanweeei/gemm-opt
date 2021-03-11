@@ -2,6 +2,7 @@
 #ifndef COMMON_PERF_HPP
 #define COMMON_PERF_HPP
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
@@ -59,6 +60,7 @@ struct GemmPerf {
   status_t finalize() {
     std::chrono::duration<double, std::micro> durations(0);
     for (size_t iter = 0; iter < warmup + dryrun; ++iter) {
+      std::fill(C, C + M * N, 0.f);
       auto start = std::chrono::high_resolution_clock::now();
       gemm();
       std::chrono::duration<double, std::micro> delta
@@ -82,7 +84,8 @@ std::ostream &operator<<(std::ostream &os, const GemmPerf<T> &gp) {
   double gflops = ops * 1.e-9 / us * 1.e6;
 
   char buffer[512] = {'\0'};
-  sprintf(buffer, "Name: %s, Dim: %ldx%ldx%ld, Glops: %.4f\n", T::name, gp.M, gp.N, gp.K, gflops);
+  sprintf(buffer, "Name: %s, Dim: %ldx%ldx%ld, ms/r: %.3f, Glops: %.4f\n", T::name, gp.M, gp.N,
+      gp.K, us / 1000.f, gflops);
   os << buffer;
 
   return os;
