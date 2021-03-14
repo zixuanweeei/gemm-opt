@@ -51,7 +51,7 @@ status_t verify_mm(
   ref_gemm(A, B, cval.data(), M, N, K);
 
   // check for correctness
-  status_t status = all_close(cval.data(), C, M, N, 1.e-5);
+  status_t status = all_close(C, cval.data(), M, N, 1.e-5);
 
   return status;
 }
