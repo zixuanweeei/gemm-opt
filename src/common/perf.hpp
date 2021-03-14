@@ -16,7 +16,7 @@ struct GemmPerf {
   static_assert(is_callable<T>::value, "Type is not callable.");
 
   static constexpr size_t warmup = 2;
-  static constexpr size_t dryrun = 5;
+  static constexpr size_t dryrun = 50;
 
   size_t M, N, K;
   size_t ops;
@@ -67,7 +67,7 @@ struct GemmPerf {
           = std::chrono::high_resolution_clock::now() - start;
       if (iter > warmup) durations += delta;
     }
-    us = durations.count();
+    us = durations.count() / dryrun;
 
     return testings::verify_mm(M, N, K, A, B, C);
   }
