@@ -7,5 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "-O3 -funroll-loops -march=native")
 
+include("cmake/options.cmake")
+
 enable_testing()
 add_subdirectory(src)

@@ -15,8 +15,8 @@ template <typename T>
 struct GemmPerf {
   static_assert(is_callable<T>::value, "Type is not callable.");
 
-  static constexpr size_t warmup = 2;
-  static constexpr size_t dryrun = 50;
+  static constexpr size_t warmup = 10;
+  static constexpr size_t dryrun = 100;
 
   size_t M, N, K;
   size_t ops;
@@ -69,7 +69,10 @@ struct GemmPerf {
     }
     us = durations.count() / dryrun;
 
-    return testings::verify_mm(M, N, K, A, B, C);
+    status_t ret = status::success;
+    if (mode & CORR) ret = testings::verify_mm(M, N, K, A, B, C);
+
+    return ret;
   }
 
   // report gemm perf

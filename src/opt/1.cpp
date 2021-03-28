@@ -2,6 +2,7 @@
 #include <string>
 
 #include "common/common.hpp"
+#include "common/parser.hpp"
 #include "common/perf.hpp"
 #include "common/ref_gemm.hpp"
 
@@ -46,7 +47,21 @@ struct opt1 {
   }
 };
 
-int main() {
+#ifndef PERF_ONLY
+go_mode_t mode {CORR};
+#else
+go_mode_t mode {PERF};
+#endif
+
+int main(int argc, char **argv) {
+  --argc;
+  ++argv;
+  bool parsed = false;
+  for (; argc > 0; --argc, ++argv) {
+    parsed |= go::parser::parse_settings(argv[0]);
+    if (!parsed) go::parser::catch_unknown_options(argv[0]);
+  }
+
   const size_t M = 1280;
   const size_t N = 1280;
   const size_t K = 1280;

@@ -7,6 +7,15 @@
 #include <random>
 #include <type_traits>
 
+enum go_mode_t {
+  MODE_UNDEF = 0x0,
+  PERF = 0x1,
+  CORR = 0x2,
+};
+const char *mode2str(go_mode_t mode);
+go_mode_t str2mode(const char *str);
+extern go_mode_t mode;
+
 namespace go {
 typedef enum { success = 0, failure = 1 } status_t;
 namespace status {

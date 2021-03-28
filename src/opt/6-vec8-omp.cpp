@@ -1,5 +1,4 @@
 
-#include <omp.h>
 #include <string>
 
 #include "common/common.hpp"
@@ -7,15 +6,15 @@
 #include "common/perf.hpp"
 #include "common/ref_gemm.hpp"
 
+#include "emmintrin.h"
 #include "immintrin.h"
-#include "xmmintrin.h"
 
 #define BLOCK_SIZE_M 32
 #define BLOCK_SIZE_N 32
-#define TILE_SIZE 16
+#define TILE_SIZE 8
 
 struct opt6 {
-  static constexpr char name[] = "opt6";
+  static constexpr char name[] = "opt6-vec8-omp";
 
   size_t M;
   size_t N;
@@ -34,7 +33,7 @@ struct opt6 {
   struct Kern {
     static constexpr int blk_size_m = block_factor_m;
     static constexpr int blk_size_n = block_factor_n;
-    static constexpr int SIMD_width = sizeof(__m128) / sizeof(float);
+    static constexpr int SIMD_width = sizeof(__m256) / sizeof(float);
     static constexpr int blk_SIMD_n = blk_size_n / SIMD_width;
     static constexpr int tile_size = tile;
 
@@ -49,15 +48,15 @@ struct opt6 {
       const int n_outer = N / blk_size_n;
       const int k_outer = K / tile_size;
 
-#pragma omp parallel for num_threads(4) collapse(2)
+      #pragma omp parallel for num_threads(4) collapse(2)
       for (int om = 0; om < m_outer; ++om) {
         for (int on = 0; on < n_outer; ++on) {
           int gm = om * blk_size_m;
           int gn = on * blk_size_n;
-          __m128 c[blk_size_m][blk_SIMD_n];
+          __m256 c[blk_size_m][blk_SIMD_n];
           for (int blk = 0; blk < blk_size_m; ++blk) {
             for (int lane = 0; lane < blk_SIMD_n; ++lane) {
-              c[blk][lane] = _mm_setzero_ps();
+              c[blk][lane] = _mm256_setzero_ps();
             }
           }
           for (int ok = 0; ok < k_outer; ++ok) {
@@ -65,16 +64,16 @@ struct opt6 {
             for (int im = 0; im < blk_size_m; ++im) {
               for (int ik = 0; ik < tile_size; ++ik) {
                 for (int lane = 0; lane < blk_SIMD_n; ++lane) {
-                  __m128 vec_b = _mm_load_ps(B + (gk + ik) * N + gn + lane * SIMD_width);
-                  __m128 vec_a_dup = _mm_load_ps1(A + (gm + im) * K + gk + ik);
-                  c[im][lane] = _mm_fmadd_ps(vec_a_dup, vec_b, c[im][lane]);
+                  __m256 vec_b = _mm256_loadu_ps(B + (gk + ik) * N + gn + lane * SIMD_width);
+                  __m256 vec_a_dup = _mm256_broadcast_ss(A + (gm + im) * K + gk + ik);
+                  c[im][lane] = _mm256_fmadd_ps(vec_a_dup, vec_b, c[im][lane]);
                 }
               }
             }
           }
           for (int m = 0; m < blk_size_m; ++m) {
             for (int lane = 0; lane < blk_SIMD_n; ++lane) {
-              _mm_store_ps(C + (gm + m) * N + gn + lane * SIMD_width, c[m][lane]);
+              _mm256_storeu_ps(C + (gm + m) * N + gn + lane * SIMD_width, c[m][lane]);
             }
           }
         }

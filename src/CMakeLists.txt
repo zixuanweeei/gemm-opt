@@ -13,6 +13,13 @@ function(register_example name srcs)
                                              ${PROJECT_SOURCE_DIR}/src/)
 
   target_link_libraries(${name} PRIVATE common OpenMP::OpenMP_CXX)
+  if(GO_PERF_ONLY_DEFAULT)
+    target_compile_definitions(${name} PUBLIC -DPERF_ONLY)
+  endif()
+endfunction()
+
+function(add_opt_test name command)
+  add_test(${name} ${command} ${ARGN})
 endfunction()
 
 file(GLOB sources opt/*.cpp)
@@ -21,5 +28,8 @@ foreach(src ${sources})
   file(RELATIVE_PATH src_rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${src})
   string(REGEX REPLACE "[/_\\.]" "-" example_name ${src_rel_path})
   register_example(${example_name} ${src})
-  add_test("${example_name}" "${example_name}")
+
+  set(cmd "${example_name} --mode=C")
+  string(REPLACE " " ";" cmd ${cmd})
+  add_opt_test("${example_name}" ${cmd})
 endforeach()
