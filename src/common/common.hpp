@@ -44,6 +44,12 @@ void init_const(T *arr, size_t nelems, T value) {
   std::fill(arr, arr + nelems, value);
 }
 
+inline int get_int_env(const char* env_var, const int default_value) {
+  const char* env_p = std::getenv(env_var);
+  if (env_p) return std::atoi(env_p);
+  return default_value;
+}
+
 } // namespace go
 
 #endif // COMMON_COMMON_HPP

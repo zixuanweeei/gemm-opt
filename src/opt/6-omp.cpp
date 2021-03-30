@@ -3,6 +3,7 @@
 #include <string>
 
 #include "common/common.hpp"
+#include "common/openmp.hpp"
 #include "common/parser.hpp"
 #include "common/perf.hpp"
 #include "common/ref_gemm.hpp"
@@ -49,7 +50,9 @@ struct opt6 {
       const int n_outer = N / blk_size_n;
       const int k_outer = K / tile_size;
 
-#pragma omp parallel for num_threads(4) collapse(2)
+      const int num_thr = go::omp::get()->get_max_num_threads();
+
+#pragma omp parallel for num_threads(num_thr) collapse(2)
       for (int om = 0; om < m_outer; ++om) {
         for (int on = 0; on < n_outer; ++on) {
           int gm = om * blk_size_m;
