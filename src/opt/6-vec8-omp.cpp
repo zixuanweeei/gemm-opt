@@ -66,9 +66,9 @@ struct opt6 {
             int gk = ok * tile_size;
             for (int im = 0; im < blk_size_m; ++im) {
               for (int ik = 0; ik < tile_size; ++ik) {
+                __m256 vec_a_dup = _mm256_broadcast_ss(A + (gm + im) * K + gk + ik);
                 for (int lane = 0; lane < blk_SIMD_n; ++lane) {
                   __m256 vec_b = _mm256_loadu_ps(B + (gk + ik) * N + gn + lane * SIMD_width);
-                  __m256 vec_a_dup = _mm256_broadcast_ss(A + (gm + im) * K + gk + ik);
                   c[im][lane] = _mm256_fmadd_ps(vec_a_dup, vec_b, c[im][lane]);
                 }
               }
