@@ -2,8 +2,9 @@
 #ifndef COMMON_REF_GEMM_HPP
 #define COMMON_REF_GEMM_HPP
 
+#include <cstddef>
+
 #include <inttypes.h>
-#include <uchar.h>
 
 namespace go {
 
